@@ -11,7 +11,7 @@ check: test/runner
 	./test/runner
 
 test/runner: src/finger_tree.o $(TEST_SRC)
-	c++ -I ./src $(CFLAGS) $(TEST_SRC) src/finger_tree.o -o test/runner
+	c++ -I ./src $(CFLAGS) $(TEST_SRC) src/finger_node.o src/finger_tree.o -o test/runner
 
 src/finger_tree.o: src/finger_tree.cpp src/finger_node.cpp
 	c++ $(CFLAGS) src/finger_tree.cpp -c -o src/finger_tree.o
