@@ -2,6 +2,8 @@ TEST_SRC = \
 	test/test.cpp \
 	test/finger_node.cpp
 
+CFLAGS=-ggdb -O0 -std=c++11
+
 .PHONY: all
 all: check 
 
