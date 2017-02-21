@@ -53,7 +53,7 @@ struct FingerLeafNode : FingerNode<Value, Measure> {
 		const Value left;
 		const Value middle;
 		const Value right;
-		FingerLeafNode (Value left, Value middle, Value right, Measure m): 
+		FingerLeafNode (Value left, Value middle, Value right): 
 			FingerNode<Value, Measure>(0), left(left), middle(middle), right(right) {};
 };
 
