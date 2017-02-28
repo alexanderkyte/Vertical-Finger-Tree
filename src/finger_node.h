@@ -1,3 +1,7 @@
+
+#ifndef __FINGER_NODE_HDR
+#define __FINGER_NODE_HDR 1
+
 #include <memory>
 
 #include <cassert>
@@ -80,6 +84,8 @@ FingerNode<Value, Measure>::find (Measure threshold, Measurer<Value, Measure> *e
 		assert(0);
 		return NULL;
 	}
+
+	return NULL;
 }
 
-
+#endif

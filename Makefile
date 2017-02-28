@@ -1,5 +1,6 @@
 TEST_SRC = \
 	test/test.cpp \
+	test/finger_tree.cpp \
 	test/finger_node.cpp
 
 CFLAGS=-ggdb -O0 -std=c++11
