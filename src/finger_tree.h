@@ -4,6 +4,7 @@
 
 #include "finger_node.h"
 #include <vector>
+#include <climits>
 
 #define ONE_AFFIX 0x1
 #define TWO_AFFIX 0x2
