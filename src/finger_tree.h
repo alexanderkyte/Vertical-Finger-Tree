@@ -21,6 +21,7 @@
 #define BITMASK_NULL 0
 #define BITMASK_OVERFLOW      0b00101101101101101101101101101101
 #define BITMASK_POST_OVERFLOW 0b00011011011011011011011011011011
+#define BITMASK_POST_UNDERFLOW 0b00100100100100100100100100100100
 
 // 0-indexed into the mask bit array
 const static inline int
@@ -66,6 +67,20 @@ set_row (BITMASK mask, int level, int state)
 }
 
 const static inline int
+get_num_underflow (BITMASK mask)
+{
+	// FIXME: parallel underflow check
+	int i;
+	for (i=0; i < BITMASK_LEVELS; i++) {
+		if (get_row (mask, i) != 1) {
+			break;
+		}
+	}
+	assert (i < BITMASK_LEVELS);
+	return i;
+}
+
+const static inline int
 get_num_overflow (BITMASK mask)
 {
 	//// XOR the candy stripe pattern we care about
@@ -95,7 +110,7 @@ mask_out_lower (BITMASK mask, int i)
 const static inline BITMASK
 mask_out_upper (BITMASK mask, int i)
 {
-	auto above = BITMASK_BITS - i - 1;
+	auto above = BITMASK_BITS - i;
 	auto i_trailing_ones = (1 << above) - 1;
 	return mask & i_trailing_ones;
 }
@@ -109,6 +124,34 @@ class FingerTree {
 		const std::shared_ptr<std::vector<Value>> right_side;
 
 		const Measurer<Value, Measure> *measurer;
+
+		const inline std::shared_ptr<FingerTree <Value, Measure>>
+		handle_underflow (bool left_near, BITMASK near_bitmask, BITMASK far_bitmask,
+		          std::shared_ptr<std::vector<Value>> near_side, std::shared_ptr<std::vector<Value>> far_side) const
+		{
+			auto new_near_side = near_side;
+			auto new_far_side = far_side;
+			//auto new_near_bitmask = near_bitmask;
+			auto new_far_bitmask = far_bitmask;
+			const int num_underflow = get_num_underflow (near_bitmask);
+
+			int num_above = BITMASK_BITS - num_underflow * 3;
+			int current_pivot = get_row (near_bitmask, num_underflow);
+			BITMASK masked = mask_out_upper (BITMASK_POST_UNDERFLOW, num_above);
+
+			// Num-overflow is the index of the first non-overflow row in 0 indexing
+			BITMASK changed;
+			if (current_pivot > 0)
+				changed = set_row (masked, num_underflow, current_pivot - 1);
+			else
+				changed = set_row (masked, num_underflow - 1, 0x0);
+
+			BITMASK new_near_bitmask = changed | mask_out_lower (near_bitmask, (num_underflow + 1) * 3);
+
+			assert (measure_bitmask (new_near_bitmask) == measure_bitmask(near_bitmask) - 1);
+
+			return create (left_near, new_near_bitmask, new_far_bitmask, new_near_side, new_far_side);
+		}
 
 		const inline std::shared_ptr<FingerTree <Value, Measure>>
 		handle_overflow (bool left_near, BITMASK near_bitmask, BITMASK far_bitmask,
@@ -200,6 +243,57 @@ class FingerTree {
 			auto new_near_bitmask = near_bitmask;
 			auto new_far_bitmask = far_bitmask;
 
+			auto new_first_row = 0;
+			auto far_mask_without = far_bitmask & ~(ONE_AFFIX | TWO_AFFIX | THREE_AFFIX);
+			auto near_mask_without = near_bitmask & ~(ONE_AFFIX | TWO_AFFIX | THREE_AFFIX);
+
+			const int near_row = get_row (near_bitmask, 0);
+			const int far_row = get_row (far_bitmask, 0);
+
+			switch (near_row) {
+			case 0: {
+				assert (near_bitmask == 0);
+				switch (far_row) {
+				case 3:
+					// Break up 3-node
+					new_far_bitmask = STATE_TWO | far_mask_without;
+					break;
+				case 2:
+					// Pop two affix 
+					new_far_bitmask = STATE_ONE | far_mask_without;
+					break;
+				case 1:
+					// Pop one affix 
+					//new_far_bitmask = 0x0 | far_mask_without;
+					return handle_underflow (!left_near, far_bitmask, near_bitmask, far_side, near_side);
+					break;
+				case 0:
+					assert (far_bitmask == 0);
+					assert (0 && "Don't pop an empty tree");
+					break;
+				default:
+					assert (0 && "Should not be reached");
+				}
+				break;
+			}
+			case 4:
+				new_near_bitmask = STATE_THREE | near_mask_without;
+				break;
+			case 3:
+				new_near_bitmask = STATE_TWO | near_mask_without;
+				break;
+			case 2:
+				new_near_bitmask = STATE_ONE | near_mask_without;
+				break;
+			case 1:
+				return handle_underflow (left_near, near_bitmask, far_bitmask, near_side, far_side);
+			}
+
+			if (get_row (near_bitmask, 0) == 0)
+				assert (measure_bitmask (new_far_bitmask) == measure_bitmask(far_bitmask) - 1);
+			else
+				assert (measure_bitmask (new_near_bitmask) == measure_bitmask(near_bitmask) - 1);
+
 			return create (left_near, new_near_bitmask, new_far_bitmask, new_near_side, new_far_side);
 		};
 
@@ -238,7 +332,13 @@ class FingerTree {
 		FingerTree (const Measurer<Value, Measure> *measurer, const BITMASK left_bitmask, const BITMASK right_bitmask,
 		    const std::shared_ptr<std::vector<Value>> left_side, const std::shared_ptr<std::vector<Value>> right_side) :
 		    left_bitmask (left_bitmask), right_bitmask (right_bitmask), left_side (left_side), right_side (right_side)
-		{};
+		{
+			if ((left_bitmask & 0xf) == 0x0)
+				assert (left_bitmask == 0);
+
+			if ((right_bitmask & 0xf) == 0x0)
+				assert (right_bitmask == 0);
+		};
 
 		// FIXME: get measurer from subclass, no indirection
 		FingerTree (Measurer<Value, Measure> *measurer) : left_bitmask (BITMASK_NULL), right_bitmask (BITMASK_NULL), left_side (nullptr), right_side (nullptr)
@@ -281,16 +381,22 @@ class FingerTree {
 		};
 
 		const std::shared_ptr<FingerTree <Value, Measure>>
-		popLeft (Value v) const
+		popLeft (void) const
 		{
 			return pop (true, left_bitmask, right_bitmask, left_side, right_side);
 		};
 
 		const std::shared_ptr<FingerTree <Value, Measure>>
-		popRight (Value v) const
+		popRight (void) const
 		{
 			return pop (false, right_bitmask, left_bitmask, right_side, left_side);
 		};
+
+		//const Value
+		//peekRight (Value v) const
+		//{
+			//return; 
+		//};
 };
 
 

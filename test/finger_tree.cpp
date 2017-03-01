@@ -46,16 +46,16 @@ void test_finger_tree_size (void) {
 		assert (size + 1 == tree->size ());
 		size = tree->size ();
 	}
-	//for (long i=0; i < 3; i++) {
-		//tree = tree->popLeft (i);
-		//assert (size - 1 == tree->size ());
-		//size = tree->size ();
-	//}
-	//for (long i=0; i < 3; i++) {
-		//tree = tree->popRight (i);
-		//assert (size - 1 == tree->size ());
-		//size = tree->size ();
-	//}
+	for (long i=0; i < 90; i++) {
+		tree = tree->popLeft ();
+		assert (size - 1 == tree->size ());
+		size = tree->size ();
+	}
+	for (long i=0; i < 90; i++) {
+		tree = tree->popRight ();
+		assert (size - 1 == tree->size ());
+		size = tree->size ();
+	}
 }
 
 void test_finger_tree (void) {
