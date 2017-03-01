@@ -36,7 +36,7 @@ void test_finger_tree_size (void) {
 	auto tree = std::make_shared<FingerTree<long, int>> (arry);
 	int size = 0;
 
-	for (long i=0; i < 30; i++) {
+	for (long i=0; i < 90; i++) {
 		tree = tree->pushLeft (i);
 		assert (size + 1 == tree->size ());
 		size++;

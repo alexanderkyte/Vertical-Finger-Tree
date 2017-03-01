@@ -1,0 +1,73 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ArrayMeasurer	test/finger_node.cpp	/^struct ArrayMeasurer : Measurer <int *, int> {$/;"	s	file:
+ArrayMeasurer	test/finger_tree.cpp	/^struct ArrayMeasurer : Measurer <long, int> {$/;"	s	file:
+BITMASK	src/finger_tree.h	18;"	d
+BITMASK_BITS	src/finger_tree.h	20;"	d
+BITMASK_LEVELS	src/finger_tree.h	19;"	d
+BITMASK_NULL	src/finger_tree.h	21;"	d
+BITMASK_OVERFLOW	src/finger_tree.h	22;"	d
+BITMASK_POST_OVERFLOW	src/finger_tree.h	23;"	d
+CFLAGS	Makefile	/^CFLAGS=-ggdb -O0 -std=c++11$/;"	m
+FingerInnerNode	src/finger_node.h	/^		FingerInnerNode (ref left, ref middle, ref right, MeasureClass m): $/;"	f	struct:FingerInnerNode
+FingerInnerNode	src/finger_node.h	/^struct FingerInnerNode : FingerNode<Value, MeasureClass> {$/;"	s
+FingerLeafNode	src/finger_node.h	/^		FingerLeafNode (Value left, Value middle, Value right): $/;"	f	struct:FingerLeafNode
+FingerLeafNode	src/finger_node.h	/^struct FingerLeafNode : FingerNode<Value, Measure> {$/;"	s
+FingerNode	src/finger_node.h	/^		FingerNode (int depth) : depth(depth) {};$/;"	f	struct:FingerNode
+FingerNode	src/finger_node.h	/^struct FingerNode$/;"	s
+FingerTree	src/finger_tree.h	/^		FingerTree (Measurer<Value, Measure> *measurer) : left_bitmask (BITMASK_NULL), right_bitmask (BITMASK_NULL), left_side (nullptr), right_side (nullptr)$/;"	f	class:FingerTree
+FingerTree	src/finger_tree.h	/^		FingerTree (const Measurer<Value, Measure> *measurer, const BITMASK left_bitmask, const BITMASK right_bitmask,$/;"	f	class:FingerTree
+FingerTree	src/finger_tree.h	/^class FingerTree {$/;"	c
+Measurer	src/finger_node.h	/^struct Measurer$/;"	s
+ONE_AFFIX	src/finger_tree.h	9;"	d
+STATE_FOUR	src/finger_tree.h	16;"	d
+STATE_ONE	src/finger_tree.h	13;"	d
+STATE_THREE	src/finger_tree.h	15;"	d
+STATE_TWO	src/finger_tree.h	14;"	d
+TEST_SRC	Makefile	/^TEST_SRC = \\$/;"	m
+THREE_AFFIX	src/finger_tree.h	11;"	d
+TWO_AFFIX	src/finger_tree.h	10;"	d
+__FINGER_NODE_HDR	src/finger_node.h	3;"	d
+__FINGER_TREES	test/test.h	3;"	d
+__FINGER_TREES_HDR	src/finger_tree.h	3;"	d
+bit_set	src/finger_tree.h	/^bit_set (BITMASK mask, int index)$/;"	f
+create	src/finger_tree.h	/^		create (bool left_near, BITMASK near_bitmask, BITMASK far_bitmask,$/;"	f	class:FingerTree
+depth	src/finger_node.h	/^		const int depth;$/;"	m	struct:FingerNode
+find	src/finger_node.h	/^FingerNode<Value, Measure>::find (Measure threshold, Measurer<Value, Measure> *executor)$/;"	f	class:FingerNode
+get_num_overflow	src/finger_tree.h	/^get_num_overflow (BITMASK mask)$/;"	f
+get_row	src/finger_tree.h	/^get_row (BITMASK mask, int level)$/;"	f
+handle_overflow	src/finger_tree.h	/^		handle_overflow (bool left_near, BITMASK near_bitmask, BITMASK far_bitmask,$/;"	f	class:FingerTree
+left	src/finger_node.h	/^		const Value left;$/;"	m	struct:FingerLeafNode
+left	src/finger_node.h	/^		const ref left;$/;"	m	struct:FingerInnerNode
+left_bitmask	src/finger_tree.h	/^		const BITMASK left_bitmask;$/;"	m	class:FingerTree
+left_side	src/finger_tree.h	/^		const std::shared_ptr<std::vector<Value>> left_side;$/;"	m	class:FingerTree
+main	test/test.cpp	/^int main(void) {$/;"	f
+mask_out_lower	src/finger_tree.h	/^mask_out_lower (BITMASK mask, int i)$/;"	f
+mask_out_upper	src/finger_tree.h	/^mask_out_upper (BITMASK mask, int i)$/;"	f
+measure	src/finger_node.h	/^		const MeasureClass measure;$/;"	m	struct:FingerInnerNode
+measure_bitmask	src/finger_tree.h	/^		measure_bitmask (BITMASK mask) const$/;"	f	class:FingerTree
+measurer	src/finger_tree.h	/^		const Measurer<Value, Measure> *measurer;$/;"	m	class:FingerTree
+middle	src/finger_node.h	/^		const Value middle;$/;"	m	struct:FingerLeafNode
+middle	src/finger_node.h	/^		const ref middle;$/;"	m	struct:FingerInnerNode
+pop	src/finger_tree.h	/^		pop (bool left_near, BITMASK near_bitmask, BITMASK far_bitmask,$/;"	f	class:FingerTree
+popLeft	src/finger_tree.h	/^		popLeft (Value v) const$/;"	f	class:FingerTree
+popRight	src/finger_tree.h	/^		popRight (Value v) const$/;"	f	class:FingerTree
+popcount	src/finger_tree.h	/^popcount (BITMASK mask)$/;"	f
+push	src/finger_tree.h	/^		push (bool left_near, BITMASK near_bitmask, BITMASK far_bitmask,$/;"	f	class:FingerTree
+pushLeft	src/finger_tree.h	/^		pushLeft (Value v) const$/;"	f	class:FingerTree
+pushRight	src/finger_tree.h	/^		pushRight (Value v) const$/;"	f	class:FingerTree
+right	src/finger_node.h	/^		const Value right;$/;"	m	struct:FingerLeafNode
+right	src/finger_node.h	/^		const ref right;$/;"	m	struct:FingerInnerNode
+right_bitmask	src/finger_tree.h	/^		const BITMASK right_bitmask;$/;"	m	class:FingerTree
+right_side	src/finger_tree.h	/^		const std::shared_ptr<std::vector<Value>> right_side;$/;"	m	class:FingerTree
+set_row	src/finger_tree.h	/^set_row (BITMASK mask, int level, int state)$/;"	f
+size	src/finger_tree.h	/^		size (void) const$/;"	f	class:FingerTree
+test_finger_node	test/finger_node.cpp	/^void test_finger_node (void) {$/;"	f
+test_finger_node_constructor	test/finger_node.cpp	/^void test_finger_node_constructor (void) {$/;"	f
+test_finger_node_find	test/finger_node.cpp	/^void test_finger_node_find (void) {$/;"	f
+test_finger_tree	test/finger_tree.cpp	/^void test_finger_tree (void) {$/;"	f
+test_finger_tree_size	test/finger_tree.cpp	/^void test_finger_tree_size (void) {$/;"	f

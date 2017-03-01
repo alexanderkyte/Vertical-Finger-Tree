@@ -8,7 +8,7 @@
 
 #define ONE_AFFIX 0x1
 #define TWO_AFFIX 0x2
-#define THREE_AFFIX 0x8
+#define THREE_AFFIX 0x4
 
 #define STATE_ONE (ONE_AFFIX)
 #define STATE_TWO (ONE_AFFIX | TWO_AFFIX)
@@ -17,10 +17,12 @@
 
 #define BITMASK int32_t
 #define BITMASK_LEVELS 10 // sizeof(BITMASK) * CHAR_BIT / 3 , floor
+#define BITMASK_BITS 32 // sizeof(BITMASK) * CHAR_BIT / 3 , floor
 #define BITMASK_NULL 0
 #define BITMASK_OVERFLOW      0b00101101101101101101101101101101
 #define BITMASK_POST_OVERFLOW 0b00011011011011011011011011011011
 
+// 0-indexed into the mask bit array
 const static inline int
 bit_set (BITMASK mask, int index)
 {
@@ -36,18 +38,31 @@ popcount (BITMASK mask)
 const static inline int
 get_row (BITMASK mask, int level)
 {
-	return popcount ((mask >> level * 4) & 0xf);
+	const BITMASK init = mask >> (level * 3);
+	const BITMASK first = (init & 0x1);
+	const BITMASK second = (init & 0x2) >> 1;
+	const BITMASK third = ((init & 0x4) >> 2) * 3;
+	return first + second + third;
 }
 
 const static inline BITMASK
 set_row (BITMASK mask, int level, int state)
 {
 	// The way the state with (index) bits looks in our bitmask
-	const int mappings [] = {0, 0x1, 0x2, 0x8, 0x9};
+	const int mappings [] = {0, STATE_ONE, STATE_TWO, STATE_THREE, STATE_FOUR};
 	const int new_state = mappings [state];
-	const int bits = level + 4;
-	const BITMASK without = mask & (~0xf << bits);
-	return without | (new_state << bits);
+
+	// Bits holds the bitmask for all rows below
+	// the changed row, lower bits, masks
+	// out all lower rows
+	const int bits = (level + 1) * 3;
+	const int lower_bits = level * 3;
+
+	const BITMASK upper_ones = ~((1 << bits) - 1);
+	const BITMASK lower_ones = (1 << lower_bits) - 1;
+
+	const BITMASK without = mask & (upper_ones | lower_ones);
+	return without | (new_state << lower_bits);
 }
 
 const static inline int
@@ -72,15 +87,17 @@ get_num_overflow (BITMASK mask)
 const static inline BITMASK
 mask_out_lower (BITMASK mask, int i)
 {
-	auto i_trailing_zeros = ~0x0 << (i * 3);
+	auto i_leading_zeros = (1 << i) - 1;
+	auto i_trailing_zeros = ~i_leading_zeros;
 	return mask & i_trailing_zeros;
 }
 
 const static inline BITMASK
 mask_out_upper (BITMASK mask, int i)
 {
-	auto i_leading_zeros = ~0x0 >> (i * 3);
-	return mask & i_leading_zeros;
+	auto above = BITMASK_BITS - i - 1;
+	auto i_trailing_ones = (1 << above) - 1;
+	return mask & i_trailing_ones;
 }
 
 template <class Value, class Measure>
@@ -105,10 +122,13 @@ class FingerTree {
 
 			const int num_overflow = get_num_overflow (near_bitmask);
 
-			BITMASK masked = mask_out_lower (BITMASK_POST_OVERFLOW, num_overflow * 3);
-			BITMASK current_pivot = get_row (near_bitmask, num_overflow + 1);
-			BITMASK changed = set_row (masked, num_overflow + 1, current_pivot + 1);
-			BITMASK new_near_bitmask = changed | mask_out_lower (near_bitmask, num_overflow + 1);
+			int num_above = BITMASK_BITS - num_overflow * 3;
+			int current_pivot = get_row (near_bitmask, num_overflow);
+			BITMASK masked = mask_out_upper (BITMASK_POST_OVERFLOW, num_above);
+
+			// Num-overflow is the index of the first non-overflow row in 0 indexing
+			BITMASK changed = set_row (masked, num_overflow, current_pivot + 1);
+			BITMASK new_near_bitmask = changed | mask_out_lower (near_bitmask, (num_overflow + 1) * 3);
 
 			return create (left_near, new_near_bitmask, new_far_bitmask, new_near_side, new_far_side);
 		};
@@ -123,24 +143,28 @@ class FingerTree {
 			auto new_near_bitmask = near_bitmask;
 			auto new_far_bitmask = far_bitmask;
 
+			auto new_first_row = 0;
+			auto far_mask_without = far_bitmask & ~(ONE_AFFIX | TWO_AFFIX | THREE_AFFIX);
+			auto near_mask_without = near_bitmask & ~(ONE_AFFIX | TWO_AFFIX | THREE_AFFIX);
+
 			switch (get_row (near_bitmask, 0)) {
 			case 0: {
 				switch (get_row (far_bitmask, 0)) {
 				case 0:
 					// New element is in 1-affix
-					new_far_bitmask = STATE_ONE;
+					new_far_bitmask = STATE_ONE | far_mask_without;
 					break;
 				case 1:
 					// New element is in 2-affix
-					new_far_bitmask = STATE_TWO;
+					new_far_bitmask = STATE_TWO | far_mask_without;
 					break;
 				case 2:
 					// New element is in previous 3-affix position for 3-tuple
-					new_far_bitmask = STATE_THREE;
+					new_far_bitmask = STATE_THREE | far_mask_without;
 					break;
 				case 3: {
 					assert (popcount (near_bitmask) == 0);
-					new_near_bitmask = STATE_ONE;
+					new_near_bitmask = STATE_ONE | far_mask_without;
 					// Push to near, start near side's first slot
 					//new_near_side = std::make_shared <std::vector<Value> >(near_side);
 					//new_near_side->push_back (added);
@@ -149,13 +173,17 @@ class FingerTree {
 				default:
 					assert (0 && "Should not be reached");
 				}
+				break;
 			}
 			case 1:
-				new_near_bitmask = STATE_TWO;
+				new_near_bitmask = STATE_TWO | near_mask_without;
+				break;
 			case 2:
-				new_near_bitmask = STATE_THREE;
+				new_near_bitmask = STATE_THREE | near_mask_without;
+				break;
 			case 3:
-				new_near_bitmask = STATE_FOUR;
+				new_near_bitmask = STATE_FOUR | near_mask_without;
+				break;
 			case 4:
 				return handle_overflow (left_near, near_bitmask, far_bitmask, near_side, far_side, added);
 			}
@@ -189,12 +217,19 @@ class FingerTree {
 		measure_bitmask (BITMASK mask) const
 		{
 			// The 0th index holds 3 items, the Nth holds 3 ** (N - 1) items
-			int size = 3;
+			int size = 1;
 			int accum = 0;
-			for (int i=0; i < sizeof (mask) * CHAR_BIT; i += 4) {
-				if (bit_set (mask, i))
+
+			int num_rows = sizeof (mask) * CHAR_BIT / 3;
+
+			for (int i=0; i < num_rows; i += 1) {
+				if (bit_set (mask, i * 3))
 					accum += size;
-				size = size * size;
+				if (bit_set (mask, (i * 3) + 1))
+					accum += size;
+				if (bit_set (mask, (i * 3) + 2))
+					accum += size * 3;
+				size = size * 3;
 			}
 			return accum;
 		};
